@@ -1,5 +1,5 @@
 import numpy as np
-
+from env import GridEnv
 class Policy:
     def __init__(self):
         """
@@ -21,7 +21,14 @@ class Policy:
         x, y = pos
         probabilities = self.probas[x, y, :]
 
-        return np.random.choice(self.actions, p=probabilities)
+        return int(np.random.choice(self.actions, p=probabilities))
+    
+    def call_from_state(self, state: int) -> int:
+        """
+        Get the action based on the current state using the policy.
+        """
+        x, y = GridEnv.get_coordinates_from_state(state)
+        return self((x, y))
 
     def get_probability_of_action(self, pos: (int, int), action: int):
         """

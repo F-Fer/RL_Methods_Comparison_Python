@@ -141,4 +141,3 @@ class GridEnv(gym.Env):
         """
         x, y = self.state
         return x * 4 + y 
-        self.values = np.zeros((4, 4))
