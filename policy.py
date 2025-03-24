@@ -43,23 +43,3 @@ class Policy:
         """
         x, y = pos
         return self.probas[x, y, action]
-
-    def display_policy(self):
-        """
-        Print the policy grid with the most probable action for each cell.
-        Actions are represented as arrows:
-        ↑ (up), → (right), ↓ (down), ← (left)
-        Terminal states are shown as 'T'.
-        """
-        action_symbols = ["↑", "→", "↓", "←"]
-        print("Policy:")
-        for x in range(4):
-            row = ""
-            for y in range(4):
-                probs = self.probas[x, y]
-                if np.allclose(probs, [0.25, 0.25, 0.25, 0.25]):
-                    row += " . "
-                else:
-                    best_action = np.argmax(probs)
-                    row += f" {action_symbols[best_action]} "
-            print(row)

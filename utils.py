@@ -16,7 +16,7 @@ def display_policy(policy: Policy):
     ↑ (up), → (right), ↓ (down), ← (left)
     Terminal states are shown as 'T'.
     """
-    action_symbols = ["↑", "→", "↓", "←"]
+    action_symbols = ["→", "↓", "←", "↑"]
     print("Policy:")
     for x in range(4):
         row = ""
@@ -27,4 +27,14 @@ def display_policy(policy: Policy):
             else:
                 best_action = np.argmax(probs)
                 row += f" {action_symbols[best_action]} "
+        print(row)
+
+def display_action_values(action_values: np.ndarray):
+    print("Action Values:")
+    print("State | Up    | Right | Down  | Left")
+    print("-" * 40)
+    for state in range(16):
+        row = f"{state:5d} |"
+        for action in range(4):
+            row += f" {action_values[state, action]:5.2f} |"
         print(row)

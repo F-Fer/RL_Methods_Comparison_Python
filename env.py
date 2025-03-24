@@ -71,12 +71,15 @@ class GridEnv(gym.Env):
                 y = min(y + 1, 3)
 
             case 1:
+                # Right
                 x = min(x + 1, 3)
 
             case 2:
+                # Down
                 y = max(y - 1, 0)
 
             case 3:
+                # Left
                 x = max(x - 1, 0)
 
             case _:   
@@ -132,6 +135,11 @@ class GridEnv(gym.Env):
         x = state // 4
         return x, y
 
+    @staticmethod
+    def get_state_from_coordinates(coordinates: (int, int)) -> int:
+        x, y = coordinates
+        return x * 4 + y
+
     def _get_obs(self) -> int:
         """
         Map the current position of x and y coordinates onto a single integer representing a state.
@@ -141,3 +149,42 @@ class GridEnv(gym.Env):
         """
         x, y = self.state
         return x * 4 + y 
+    
+    def display_state(self):
+        """
+        Display the current state as a grid, showing the agent's position with 'A',
+        terminal states with 'T', and empty cells with '.'.
+
+        Example output:
+        . . . .
+        . A . T
+        . . . .
+        T . . T
+        """
+        grid = [['.' for _ in range(4)] for _ in range(4)]
+        
+        # Mark terminal states
+        for tx, ty in self.terminal_states:
+            grid[tx][ty] = 'T'
+            
+        # Mark agent position
+        x, y = self.state
+        grid[x][y] = 'A'
+        
+        # Print grid
+        for row in grid:
+            print(' '.join(row))
+    
+
+if __name__ == "__main__":
+    env = GridEnv()
+    print(env.reset())
+    env.display_state()
+    print(env.step(0))
+    env.display_state()
+    print(env.step(1))
+    env.display_state()
+    print(env.step(2))  
+    env.display_state()
+    print(env.step(3))
+    env.display_state()

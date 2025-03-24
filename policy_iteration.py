@@ -77,13 +77,4 @@ class GPI:
             self.evaluate_policy(env, update_threshold)
             self.improve_policy(env, epsylon)
             if np.array_equal(self.policy.probas, old_policy):
-                print(f"Converged after {i} iteration.")
                 break
-
-    def display_values(self):
-        print("Values:")
-        for x in range(4):
-            row = ""
-            for y in range(4):
-                row += f" {self.values[x, y]:.2f} "
-            print(row)
