@@ -76,5 +76,21 @@ def td_estimate_state_values():
 
     display_values(td.values)
 
+def td_estimate_action_values():
+    gym.envs.registration.register(
+        id="SimpleGrid-v0",
+        entry_point="env:GridEnv",
+    )
+
+    env = gym.make("SimpleGrid-v0").unwrapped
+
+    policy = Policy()
+
+    td = TemporalDifferenceLearning(env, policy)
+
+    td.iterate(10, 1000, 0.1, 0.1)
+
+    display_action_values(td.action_values)
+    display_policy(td.policy)
 if __name__ == "__main__":
-    td_estimate_state_values() 
+    td_estimate_action_values() 
