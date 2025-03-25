@@ -8,27 +8,25 @@ class Policy:
         self.probas = np.full((4, 4, 4), 0.25) # x, y, z, with z being the probability of taking the action ([0, 1])
         self.actions = np.array([0, 1, 2, 3]) # 0: up, 1: right ...
 
-    def __call__(self, pos: (int, int)) -> int:
+    def __call__(self, pos_or_state: (int, int) or int) -> int:
         """
-        Get the action based on the current position using the policy.
+        Get the action based on the current position or state using the policy.
 
         Parameters:
-            pos (tuple): A tuple representing the position (x, y).
+            pos_or_state (tuple or int): Either a (x, y) position tuple or a state index.
 
         Returns:
             int: The selected action.
         """
-        x, y = pos
-        probabilities = self.probas[x, y, :]
+        if isinstance(pos_or_state, int):
+            # Get coordinates from state    
+            x, y = GridEnv.get_coordinates_from_state(pos_or_state)
+        else:
+            # Get coordinates from position
+            x, y = pos_or_state
 
+        probabilities = self.probas[x, y, :]
         return int(np.random.choice(self.actions, p=probabilities))
-    
-    def call_from_state(self, state: int) -> int:
-        """
-        Get the action based on the current state using the policy.
-        """
-        x, y = GridEnv.get_coordinates_from_state(state)
-        return self((x, y))
 
     def get_probability_of_action(self, pos: (int, int), action: int):
         """

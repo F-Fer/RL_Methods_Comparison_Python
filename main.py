@@ -4,6 +4,7 @@ from policy_iteration import GPI
 from monte_carlo import MonteCarlo
 from policy import Policy
 from utils import display_policy, display_values, display_action_values
+from temporal_difference_learning import TemporalDifferenceLearning
 
 def policy_iteration():
     gym.envs.registration.register(
@@ -58,5 +59,22 @@ def mc_estimate_action_values():
     display_action_values(mc.action_values)
     display_policy(mc.policy)
 
+def td_estimate_state_values():
+    gym.envs.registration.register(
+        id="SimpleGrid-v0",
+        entry_point="env:GridEnv",
+    )
+
+    env = gym.make("SimpleGrid-v0").unwrapped
+
+    policy = Policy()
+
+    td = TemporalDifferenceLearning(env, policy)
+
+    for _ in range(1000):
+        td.evaluate_state_values()
+
+    display_values(td.values)
+
 if __name__ == "__main__":
-    mc_estimate_action_values()
+    td_estimate_state_values() 

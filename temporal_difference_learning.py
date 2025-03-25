@@ -2,9 +2,9 @@ import numpy as np
 from env import GridEnv
 from policy import Policy
 
-class MonteCarlo:
+class TemporalDifferenceLearning:
     """
-    Monte Carlo first visit policy evaluation.
+    Temporal Difference Learning.
     """
 
     def __init__(self, env: GridEnv, policy: Policy, discount_factor: float = 0.9):
@@ -14,23 +14,16 @@ class MonteCarlo:
         self.discount_factor = discount_factor
         self.action_values = np.zeros((16, 4)) # states x actions
 
-    def evaluate_state_values (self, num_episodes: int = 1000):
-        state_returns = {}
+    def evaluate_state_values (self, learning_rate: float = 0.1, num_episodes: int = 1000):
         for _ in range(num_episodes):
-            episode = self.generate_episode()
-            G = 0
-            visited_states = set()
-            for t in reversed(range(len(episode))):
-                state, action, reward = episode[t]
-                G = reward + self.discount_factor * G
-                if state not in visited_states:
-                    visited_states.add(state)
-                    if state not in state_returns:
-                        state_returns[state] = []
-                    state_returns[state].append(G)
-            
-        for state in state_returns:
-            self.values[GridEnv.get_coordinates_from_state(state)] = np.mean(state_returns[state])
+            state, info = self.env.reset()
+            done = False
+            while not done:
+                action = self.policy(state)
+                next_state, reward, done, truncated, info = self.env.step(action)
+                self.values[GridEnv.get_coordinates_from_state(state)] +=  learning_rate * (reward + self.discount_factor * self.values[GridEnv.get_coordinates_from_state(next_state)] - self.values[GridEnv.get_coordinates_from_state(state)])
+                state = next_state
+
 
     def evaluate_action_values (self, num_episodes: int = 1000):
         action_returns = {}
