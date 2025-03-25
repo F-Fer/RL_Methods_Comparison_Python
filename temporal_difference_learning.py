@@ -82,7 +82,7 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
                 state = next_state
                 action = next_action
 
-    def q_learning(self, learning_rate: float = 0.1, num_episodes: int = 1000, epsylon: float = 0.1):
+    def q_learning(self, learning_rate: float = 0.1, num_episodes: int = 1000, epsilon: float = 0.1):
         """
         Q-Learning algorithm for optimal action-value estimation.
         
@@ -96,7 +96,7 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
             done = False
             while not done:
                 # ε-greedy action selection
-                if np.random.random() < epsylon:
+                if np.random.random() < epsilon:
                     action = int(np.random.choice(self.env.action_space.n))
                 else:
                     action = int(np.argmax(self.action_values[state]))
@@ -110,12 +110,12 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
                 self.action_values[state, action] += learning_rate * td_error
                 state = next_state
 
-    def improve_policy(self, epsylon: float = 0.1):
+    def improve_policy(self, epsilon: float = 0.1):
         """
         Improve the policy using ε-greedy exploration.
         
         Args:
-            epsylon: Probability of choosing a random action
+            epsilon: Probability of choosing a random action
         """
         for state in range(self.env.observation_space.n):
             x, y = GridEnv.get_coordinates_from_state(state)
@@ -124,12 +124,12 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
             best_action = np.argmax(self.action_values[state])
             for action in range(self.env.action_space.n):
                 if action == best_action:
-                    self.policy.probas[x, y, action] = 1 - epsylon + (epsylon / self.env.action_space.n)
+                    self.policy.probas[x, y, action] = 1 - epsilon + (epsilon / self.env.action_space.n)
                 else:
-                    self.policy.probas[x, y, action] = epsylon / self.env.action_space.n
+                    self.policy.probas[x, y, action] = epsilon / self.env.action_space.n
 
     def iterate(self, num_iterations: int = 10, episodes_per_eval: int = 1000, 
-                learning_rate: float = 0.1, epsylon: float = 0.1):
+                learning_rate: float = 0.1, epsilon: float = 0.1):
         """
         Iterate between policy evaluation and improvement.
         
@@ -137,11 +137,11 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
             num_iterations: Number of policy evaluation-improvement cycles
             episodes_per_eval: Number of episodes per evaluation
             learning_rate: Learning rate for updates
-            epsylon: Exploration rate for policy improvement
+            epsilon: Exploration rate for policy improvement
         """
         for _ in range(num_iterations):
             self.sarsa(learning_rate=learning_rate, num_episodes=episodes_per_eval)
-            self.improve_policy(epsylon=epsylon)
+            self.improve_policy(epsilon=epsilon)
 
     def generate_episode(self):
         obs, info = self.env.reset()

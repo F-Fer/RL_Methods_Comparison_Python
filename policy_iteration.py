@@ -87,7 +87,7 @@ class GPI(BaseRLAlgorithm):
                 # Update value estimate
                 self.values[x, y] = state_value
 
-    def improve_policy(self, env: GridEnv, epsylon: float = 0.1):
+    def improve_policy(self, env: GridEnv, epsilon: float = 0.1):
         """
         Improve the policy using the current value function.
         
@@ -97,7 +97,7 @@ class GPI(BaseRLAlgorithm):
         
         Args:
             env: The environment to improve the policy in
-            epsylon: Probability of choosing a random action
+            epsilon: Probability of choosing a random action
         """
         for state in range(env.observation_space.n):
             x, y = GridEnv.get_coordinates_from_state(state)
@@ -121,12 +121,12 @@ class GPI(BaseRLAlgorithm):
             # Update policy probabilities
             for action in range(env.action_space.n):
                 if action == best_action:
-                    self.policy.probas[x, y, action] = 1 - epsylon + (epsylon / env.action_space.n)
+                    self.policy.probas[x, y, action] = 1 - epsilon + (epsilon / env.action_space.n)
                 else:
-                    self.policy.probas[x, y, action] = epsylon / env.action_space.n
+                    self.policy.probas[x, y, action] = epsilon / env.action_space.n
 
     def iterate_policy(self, env: GridEnv, max_iter: int = 500_000, 
-                      update_threshold: float = 0.9, epsylon: float = 0.1):
+                      update_threshold: float = 0.9, epsilon: float = 0.1):
         """
         Run policy iteration until convergence or max iterations reached.
         
@@ -134,12 +134,12 @@ class GPI(BaseRLAlgorithm):
             env: The environment to learn in
             max_iter: Maximum number of iterations
             update_threshold: Threshold for policy evaluation convergence
-            epsylon: Exploration rate for policy improvement
+            epsilon: Exploration rate for policy improvement
         """
         for i in range(max_iter):
             old_policy = self.policy.probas.copy()
             self.evaluate_policy(env, update_threshold)
-            self.improve_policy(env, epsylon)
+            self.improve_policy(env, epsilon)
             
             # Check for convergence
             if np.array_equal(self.policy.probas, old_policy):

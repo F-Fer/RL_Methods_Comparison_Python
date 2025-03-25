@@ -125,7 +125,7 @@ class MonteCarlo(BaseRLAlgorithm):
         for (state, action) in action_returns:
             self.action_values[state, action] = np.mean(action_returns[(state, action)])
 
-    def improve_policy(self, epsylon: float = 0.1):
+    def improve_policy(self, epsilon: float = 0.1):
         """
         Improve the policy using ε-greedy exploration.
         
@@ -135,7 +135,7 @@ class MonteCarlo(BaseRLAlgorithm):
         3. Set other actions' probabilities to ε/|A|
         
         Args:
-            epsylon: Probability of choosing a random action
+            epsilon: Probability of choosing a random action
         """
         for state in range(self.env.observation_space.n):
             x, y = GridEnv.get_coordinates_from_state(state)
@@ -145,22 +145,22 @@ class MonteCarlo(BaseRLAlgorithm):
             best_action = np.argmax(self.action_values[state])
             for action in range(self.env.action_space.n):
                 if action == best_action:
-                    self.policy.probas[x, y, action] = 1 - epsylon + (epsylon / self.env.action_space.n)
+                    self.policy.probas[x, y, action] = 1 - epsilon + (epsilon / self.env.action_space.n)
                 else:
-                    self.policy.probas[x, y, action] = epsylon / self.env.action_space.n
+                    self.policy.probas[x, y, action] = epsilon / self.env.action_space.n
 
-    def iterate(self, num_iterations: int = 10, episodes_per_eval: int = 1000, epsylon: float = 0.1):
+    def iterate(self, num_iterations: int = 10, episodes_per_eval: int = 1000, epsilon: float = 0.1):
         """
         Iterate between policy evaluation and improvement.
         
         Args:
             num_iterations: Number of policy evaluation-improvement cycles
             episodes_per_eval: Number of episodes per evaluation
-            epsylon: Exploration rate for policy improvement
+            epsilon: Exploration rate for policy improvement
         """
         for _ in range(num_iterations):
             self.evaluate_action_values(num_episodes=episodes_per_eval)
-            self.improve_policy(epsylon=epsylon)
+            self.improve_policy(epsilon=epsilon)
 
     def generate_episode(self) -> list[tuple[int, int, float]]:
         obs, info = self.env.reset()
