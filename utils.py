@@ -29,6 +29,21 @@ def display_policy(policy: Policy):
                 row += f" {action_symbols[best_action]} "
         print(row)
 
+def display_policy_from_action_values(action_values: np.ndarray):
+    action_symbols = ["→", "↓", "←", "↑"]
+    print("Policy:")
+    for x in range(4):
+        row = ""
+        for y in range(4):
+            state = x * 4 + y
+            probs = action_values[state]
+            if np.allclose(probs, [0, 0, 0, 0]):
+                row += " . "
+            else:
+                best_action = np.argmax(probs)
+                row += f" {action_symbols[best_action]} "
+        print(row)
+
 def display_action_values(action_values: np.ndarray):
     print("Action Values:")
     print("State | Up    | Right | Down  | Left")

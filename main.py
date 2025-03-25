@@ -3,7 +3,7 @@ import gymnasium as gym
 from policy_iteration import GPI
 from monte_carlo import MonteCarlo
 from policy import Policy
-from utils import display_policy, display_values, display_action_values
+from utils import display_policy, display_values, display_action_values, display_policy_from_action_values
 from temporal_difference_learning import TemporalDifferenceLearning
 
 def policy_iteration():
@@ -92,5 +92,22 @@ def td_estimate_action_values():
 
     display_action_values(td.action_values)
     display_policy(td.policy)
+
+def td_q_learning():
+    gym.envs.registration.register(
+        id="SimpleGrid-v0",
+        entry_point="env:GridEnv",
+    )
+
+    env = gym.make("SimpleGrid-v0").unwrapped   
+    
+    policy = Policy()
+
+    td = TemporalDifferenceLearning(env, policy)
+
+    td.q_learning(learning_rate=0.1, num_episodes=10_000, epsylon=0.1)
+    display_action_values(td.action_values)
+    display_policy_from_action_values(td.action_values)
+
 if __name__ == "__main__":
-    td_estimate_action_values() 
+    td_q_learning() 
