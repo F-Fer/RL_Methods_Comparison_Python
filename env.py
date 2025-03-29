@@ -10,25 +10,25 @@ class GridEnv(gym.Env):
     - 0 for terminal states
     """
 
-    def __init__(self):
+    def __init__(self, size: int):
         """
         Initialize the GridEnv environment.
         Sets up the observation space, action space, and initializes the state.
         """
         super().__init__()
-        
+        self.size = size
         # Define observation space
-        self.observation_space = gym.spaces.Discrete(4 * 4)
+        self.observation_space = gym.spaces.Discrete(size * size)
 
         # Define action space
         # Up, right, down, left
         self.action_space = gym.spaces.Discrete(4)
 
         # Define terminal states
-        self.terminal_states = [(0, 0), (3, 3)]
+        self.terminal_states = [(0, 0), (size - 1, size - 1)]
 
         # Initialize at random position
-        self.state = np.random.randint(0, 4), np.random.randint(0, 4)
+        self.state = np.random.randint(0, size), np.random.randint(0, size)
 
     def reset(self, seed=None, options=None) -> (int, dict):
         """
@@ -44,9 +44,9 @@ class GridEnv(gym.Env):
         super().reset(seed=seed)
 
         # Initialize at random position
-        self.state = np.random.randint(0, 4), np.random.randint(0, 4) 
+        self.state = np.random.randint(0, self.size), np.random.randint(0, self.size) 
         while self.state in self.terminal_states:
-            self.state = np.random.randint(0, 4), np.random.randint(0, 4) 
+            self.state = np.random.randint(0, self.size), np.random.randint(0, self.size) 
         return self._get_obs(), {}
 
     def step(self, action: int) -> (int, float, bool, bool, {}):
@@ -68,15 +68,15 @@ class GridEnv(gym.Env):
         match action:
             case 0:
                 # Up
-                y = min(y + 1, 3)
+                y = max(y - 1, 0)
 
             case 1:
                 # Right
-                x = min(x + 1, 3)
+                x = min(x + 1, self.size - 1)
 
             case 2:
                 # Down
-                y = max(y - 1, 0)
+                y = min(y + 1, self.size - 1)
 
             case 3:
                 # Left
@@ -98,30 +98,36 @@ class GridEnv(gym.Env):
         
         return self._get_obs(), reward, done, False, {}
 
-    def set_starting_state(self, starting_state: (int, int)) -> None:
+    def set_state(self, starting_state: int) -> bool:
         """
         Set the starting state of the environment.
 
         Parameters:
-            starting_state (tuple): A tuple representing the starting state (x, y).
+            starting_state (int): An integer representing the starting state.
 
         Raises:
-            ValueError: If starting_state is not a tuple or if its elements are out of range.
+            ValueError: If starting_state is not an integer or if its elements are out of range.
+
+        Returns:
+            bool: True if the state was set successfully and is valid, False otherwise.
         """
-        if type(starting_state) is not tuple:
-            raise ValueError("starting state must be a tuple.")
+        if type(starting_state) is not int:
+            raise ValueError("state must be an integer.")
 
-        x, y = starting_state
+        x, y = self.get_coordinates_from_state(starting_state)
 
-        if x == None or type(x) != int or x not in range(0, 4):
+        if x == None or type(x) != int or x not in range(0, self.size):
             raise ValueError("starting_states elements cannot be None, must be of type int, and must be in range [0, 3].")
-        if y == None or type(y) != int or y not in range(0, 4):
+        if y == None or type(y) != int or y not in range(0, self.size):
             raise ValueError("starting_states elements cannot be None, must be of type int, and must be in range [0, 3].")
+        
+        if (x, y) in self.terminal_states:  
+            return False
 
         self.state = x, y
+        return True
 
-    @staticmethod
-    def get_coordinates_from_state(state):
+    def get_coordinates_from_state(self, state : int) -> (int, int):
         """
         Convert a state integer to its corresponding (x, y) coordinates.
 
@@ -131,14 +137,13 @@ class GridEnv(gym.Env):
         Returns:
             tuple: A tuple containing the (x, y) coordinates.
         """
-        y = state % 4
-        x = state // 4
+        x = state % self.size
+        y = state // self.size
         return x, y
 
-    @staticmethod
-    def get_state_from_coordinates(coordinates: (int, int)) -> int:
+    def get_state_from_coordinates(self, coordinates: (int, int)) -> int:
         x, y = coordinates
-        return x * 4 + y
+        return y * self.size + x
 
     def _get_obs(self) -> int:
         """
@@ -148,7 +153,7 @@ class GridEnv(gym.Env):
             int: The mapped state integer in range [0, 15].
         """
         x, y = self.state
-        return x * 4 + y 
+        return y * self.size + x 
     
     def display_state(self):
         """
@@ -161,15 +166,15 @@ class GridEnv(gym.Env):
         . . . .
         T . . T
         """
-        grid = [['.' for _ in range(4)] for _ in range(4)]
+        grid = [[f'{row * self.size + col}' for col in range(self.size)] for row in range(self.size)]
         
         # Mark terminal states
         for tx, ty in self.terminal_states:
-            grid[tx][ty] = 'T'
+            grid[ty][tx] = 'T'
             
         # Mark agent position
         x, y = self.state
-        grid[x][y] = 'A'
+        grid[y][x] = 'A'
         
         # Print grid
         for row in grid:
@@ -177,14 +182,27 @@ class GridEnv(gym.Env):
     
 
 if __name__ == "__main__":
-    env = GridEnv()
+    env = GridEnv(size=4)
+    
     print(env.reset())
     env.display_state()
+    print(env.state)
+    print()
+
     print(env.step(0))
     env.display_state()
+    print(env.state)
+    print()
+
     print(env.step(1))
     env.display_state()
+    print(env.state)    
+    print()
+
     print(env.step(2))  
     env.display_state()
+    print(env.state)
+    print()
+
     print(env.step(3))
     env.display_state()

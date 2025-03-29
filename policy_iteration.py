@@ -2,145 +2,142 @@ import numpy as np
 from typing import Dict, Any
 from env import GridEnv
 from policy import Policy
-from rl.base import BaseRLAlgorithm
 
-class GPI(BaseRLAlgorithm):
+class GPI:
     """
-    Generalized Policy Iteration (GPI) implementation.
+    Policy Iteration implementation following the classical algorithm.
     
-    GPI alternates between two steps:
-    1. Policy Evaluation: Compute the value function for the current policy
-    2. Policy Improvement: Update the policy based on the value function
+    The algorithm consists of two main steps:
+    1. Policy Evaluation: Compute V(s) for the current policy π
+    2. Policy Improvement: Update π to be greedy with respect to V
     
-    The algorithm converges to the optimal policy when the policy stops changing.
+    This process continues until the policy stabilizes (no changes in any state).
     """
     
-    def __init__(self, discount_factor: float = 0.9):
+    def __init__(self, env: GridEnv, discount_factor: float = 0.9):
         """
-        Initialize GPI with a policy and value function.
-        
-        Args:
-            discount_factor: The discount factor (gamma) for future rewards
-        """
-        super().__init__(None, Policy(), discount_factor)  # env will be set in train()
-        self.values = np.zeros((4, 4))
-
-    def train(self, num_episodes: int = 1000, learning_rate: float = 0.1) -> Dict[str, Any]:
-        """
-        Train the policy using GPI.
-        
-        Args:
-            num_episodes: Maximum number of policy iterations
-            learning_rate: Not used in GPI, kept for interface consistency
-            
-        Returns:
-            Dictionary containing training metrics and results
-        """
-        if self.env is None:
-            raise ValueError("Environment not set. Call set_environment() first.")
-            
-        start_time = time.time()
-        self.iterate_policy(self.env)
-        elapsed_ms = (time.time() - start_time) * 1000
-        
-        return {
-            'elapsed_time': elapsed_ms,
-            'policy': self.policy,
-            'values': self.values
-        }
-
-    def evaluate_policy(self, env: GridEnv, update_threshold: float = 0.01):
-        """
-        Evaluate the current policy by computing its value function.
-        
-        Uses the Bellman equation for policy evaluation:
-        V(s) = Σ π(a|s) * Σ p(s',r|s,a) * [r + γV(s')]
-        
-        Args:
-            env: The environment to evaluate the policy in
-            update_threshold: The threshold for convergence
-        """
-        max_update = float("inf")
-        while max_update > update_threshold:
-            max_update = 0
-            for state in range(env.observation_space.n):
-                x, y = GridEnv.get_coordinates_from_state(state)
-                if (x, y) in env.terminal_states:
-                    continue
-                    
-                state_value = 0
-                for action in range(env.action_space.n):
-                    env.set_starting_state((x, y))
-                    action_proba = self.policy.get_probability_of_action((x, y), action)
-                    
-                    # Take step and get next state
-                    obs, reward, done, truncated, info = env.step(action)
-                    new_x, new_y = GridEnv.get_coordinates_from_state(obs)
-                    
-                    # Bellman equation update
-                    state_value += action_proba * (reward + self.discount_factor * self.values[new_x, new_y])
-                
-                # Track maximum update for convergence
-                diff = abs(self.values[x, y] - state_value)
-                max_update = max(max_update, diff)
-                
-                # Update value estimate
-                self.values[x, y] = state_value
-
-    def improve_policy(self, env: GridEnv, epsilon: float = 0.1):
-        """
-        Improve the policy using the current value function.
-        
-        Uses ε-greedy policy improvement:
-        π(a|s) = 1 - ε + ε/|A| if a is optimal
-        π(a|s) = ε/|A| otherwise
-        
-        Args:
-            env: The environment to improve the policy in
-            epsilon: Probability of choosing a random action
-        """
-        for state in range(env.observation_space.n):
-            x, y = GridEnv.get_coordinates_from_state(state)
-            if (x, y) in env.terminal_states:
-                continue
-                
-            # Find best action
-            best_action = 0
-            highest_value = float("-inf")
-            
-            for action in range(env.action_space.n):
-                env.set_starting_state((x, y))
-                obs, reward, done, truncated, info = env.step(action)
-                new_x, new_y = GridEnv.get_coordinates_from_state(obs)
-                action_value = reward + self.discount_factor * self.values[new_x, new_y]
-                
-                if action_value > highest_value:
-                    highest_value = action_value
-                    best_action = action
-            
-            # Update policy probabilities
-            for action in range(env.action_space.n):
-                if action == best_action:
-                    self.policy.probas[x, y, action] = 1 - epsilon + (epsilon / env.action_space.n)
-                else:
-                    self.policy.probas[x, y, action] = epsilon / env.action_space.n
-
-    def iterate_policy(self, env: GridEnv, max_iter: int = 500_000, 
-                      update_threshold: float = 0.9, epsilon: float = 0.1):
-        """
-        Run policy iteration until convergence or max iterations reached.
+        Initialize Policy Iteration with a policy and value function.
         
         Args:
             env: The environment to learn in
-            max_iter: Maximum number of iterations
-            update_threshold: Threshold for policy evaluation convergence
-            epsilon: Exploration rate for policy improvement
+            discount_factor: The discount factor (gamma) for future rewards
         """
-        for i in range(max_iter):
-            old_policy = self.policy.probas.copy()
-            self.evaluate_policy(env, update_threshold)
-            self.improve_policy(env, epsilon)
+        self.env = env
+        self.policy = Policy(num_states=env.observation_space.n)  # π(s) ∈ A(s) arbitrarily for all s ∈ S
+        self.values = np.zeros(env.observation_space.n)  # V(s) ∈ ℝ arbitrarily for all s ∈ S
+        self.discount_factor = discount_factor
+
+    def evaluate_policy(self, update_threshold: float = 0.001):
+        """
+        Evaluate the current policy by computing its value function.
+        
+        Implements the policy evaluation step using the Bellman equation:
+        V_{k+1}(s) = Σ_a π(a|s) Σ_{s'} P(s',r|s,a)[r + γV_k(s')]
+        
+        In our deterministic environment, P(s',r|s,a) = 1 for the actual next state and reward,
+        so we can simplify to:
+        V_{k+1}(s) = Σ_a π(a|s)[r + γV_k(s')]
+        
+        Args:
+            update_threshold: θ (small positive number determining accuracy)
+        """
+        while True:
+            max_update = 0  # Δ ← 0
+            for state in range(self.env.observation_space.n):
+                old_value = self.values[state]  # v ← V(s)
+                
+                # Calculate new state value by summing over all actions
+                new_value = 0
+                for action in range(self.env.action_space.n):
+                    # Get action probability from policy
+                    action_prob = self.policy.get_probability_of_action(state, action)
+                    
+                    # Get next state and reward for this action
+                    # Skip terminal states
+                    is_valid = self.env.set_state(state)
+                    if not is_valid:
+                        continue
+                    next_state, reward, done, truncated, info = self.env.step(action)
+                    
+                    # Add to value using action probability as weight
+                    new_value += action_prob * (reward + self.discount_factor * self.values[next_state])
+                
+                # Update value and track maximum change
+                self.values[state] = new_value
+                max_update = max(max_update, abs(old_value - new_value))  # Δ ← max(Δ, |v - V(s)|)
             
-            # Check for convergence
-            if np.array_equal(self.policy.probas, old_policy):
+            if max_update < update_threshold:  # Δ < θ
                 break
+
+    def improve_policy(self) -> bool:
+        """
+        Improve the policy using value function.
+        
+        Implements the policy improvement step:
+        policy_stable ← true
+        For each s ∈ S:
+            old_action ← π(s)
+            π(s) ← argmax_a Σ p(s',r|s,a)[r + γV(s')]
+            If old_action ≠ π(s), then policy_stable ← false
+        
+        Returns:
+            bool: True if policy is stable (no changes), False otherwise
+        """
+        policy_stable = True  # policy-stable ← true
+        
+        for state in range(self.env.observation_space.n):
+            # Skip terminal states
+            x, y = self.env.get_coordinates_from_state(state)
+            if (x, y) in self.env.terminal_states:
+                continue
+            
+            # Store old action
+            old_action = self.policy(state)  # old-action ← π(s)
+            
+            # Find best action using one-step lookahead
+            best_action = None
+            best_value = float("-inf")
+            
+            # π(s) ← argmax_a Σ p(s',r|s,a)[r + γV(s')]
+            for action in range(self.env.action_space.n):
+                self.env.set_state(state)
+                obs, reward, done, truncated, info = self.env.step(action)
+                value = reward + self.discount_factor * self.values[obs]
+                
+                if value > best_value:
+                    best_value = value
+                    best_action = action
+            
+            # Update policy to choose best action deterministically
+            for action in range(self.env.action_space.n):
+                self.policy.probas[state, action] = 1.0 if action == best_action else 0.0
+            
+            # If old_action ≠ π(s), then policy_stable ← false
+            if old_action != best_action:
+                policy_stable = False
+        
+        return policy_stable
+
+    def iterate_policy(self, update_threshold: float = 0.001) -> Dict[str, Any]:
+        """
+        Run policy iteration until convergence.
+        
+        Implements the main policy iteration loop:
+        1. Policy Evaluation
+        2. Policy Improvement
+        3. If policy is stable, return optimal value function and policy
+        
+        Returns:
+            Dictionary containing the optimal value function and policy
+        """
+        while True:
+            self.evaluate_policy(update_threshold)
+            policy_stable = self.improve_policy()
+            # If policy_stable, then stop and return V ≈ v* and π ≈ π*
+            if policy_stable:
+                break
+        
+        return {
+            'values': self.values,
+            'policy': self.policy
+        }

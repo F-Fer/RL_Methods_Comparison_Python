@@ -1,43 +1,40 @@
 import numpy as np
-from env import GridEnv
+
 class Policy:
-    def __init__(self):
+    def __init__(self, num_states: int):
         """
         Initialize the Policy with uniform probabilities for each action.
+        
+        Args:
+            size (int): The size of the grid. The total number of states will be size * size.
         """
-        self.probas = np.full((4, 4, 4), 0.25) # x, y, z, with z being the probability of taking the action ([0, 1])
-        self.actions = np.array([0, 1, 2, 3]) # 0: up, 1: right ...
+        self.num_states = num_states
+        num_actions = 4
+        self.probas = np.full((self.num_states, num_actions), 0.25)  # state × action probabilities
+        self.actions = np.array([0, 1, 2, 3])  # 0: up, 1: right, 2: down, 3: left
 
-    def __call__(self, pos_or_state: (int, int) or int) -> int:
+    def __call__(self, state: int) -> int:
         """
-        Get the action based on the current position or state using the policy.
+        Get the action based on the current state using the policy.
 
-        Parameters:
-            pos_or_state (tuple or int): Either a (x, y) position tuple or a state index.
+        Args:
+            state (int): The current state index.
 
         Returns:
             int: The selected action.
         """
-        if isinstance(pos_or_state, int):
-            # Get coordinates from state    
-            x, y = GridEnv.get_coordinates_from_state(pos_or_state)
-        else:
-            # Get coordinates from position
-            x, y = pos_or_state
-
-        probabilities = self.probas[x, y, :]
+        probabilities = self.probas[state, :]
         return int(np.random.choice(self.actions, p=probabilities))
 
-    def get_probability_of_action(self, pos: (int, int), action: int):
+    def get_probability_of_action(self, state: int, action: int) -> float:
         """
-        Get the probability of taking a specific action at a given position.
+        Get the probability of taking a specific action at a given state.
 
-        Parameters:
-            pos (tuple): A tuple representing the position (x, y).
+        Args:
+            state (int): The state index.
             action (int): The action to evaluate.
 
         Returns:
             float: The probability of taking the specified action.
         """
-        x, y = pos
-        return self.probas[x, y, action]
+        return self.probas[state, action]

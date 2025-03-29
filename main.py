@@ -8,17 +8,32 @@ from utils import display_policy, display_values, display_action_values, display
 from temporal_difference_learning import TemporalDifferenceLearning
 from config import RLConfig, default_config
 
-def setup_environment() -> gym.Env:
-    """Set up and register the grid environment."""
+def setup_environment(config: RLConfig = default_config) -> gym.Env:
+    """
+    Set up and register the grid environment with configured size.
+    
+    Args:
+        config: Configuration object containing grid_size and other parameters
+        
+    Returns:
+        The created environment instance
+    """
     try:
         gym.envs.registration.register(
             id="SimpleGrid-v0",
             entry_point="env:GridEnv",
+            kwargs={'size': config.grid_size}
         )
     except gym.error.Error:
-        # Environment already registered
-        pass
-    return gym.make("SimpleGrid-v0").unwrapped
+        # Environment already registered, unregister it first
+        gym.envs.registration.registry.remove("SimpleGrid-v0")
+        gym.envs.registration.register(
+            id="SimpleGrid-v0",
+            entry_point="env:GridEnv",
+            kwargs={'size': config.grid_size}
+        )
+    
+    return gym.make("SimpleGrid-v0", size=config.grid_size).unwrapped
 
 def run_policy_iteration(config: RLConfig = default_config) -> Dict[str, Any]:
     """
@@ -30,17 +45,12 @@ def run_policy_iteration(config: RLConfig = default_config) -> Dict[str, Any]:
     Returns:
         Dictionary containing results and metrics
     """
-    env = setup_environment()
-    gpi = GPI()
-    
-    start_time = time.time()
-    gpi.iterate_policy(env)
-    elapsed_ms = (time.time() - start_time) * 1000
-    
+    env = setup_environment(config)
+    gpi = GPI(env, discount_factor=config.discount_factor)
+    results = gpi.iterate_policy()
     return {
-        'elapsed_time': elapsed_ms,
-        'policy': gpi.policy,
-        'values': gpi.values
+        'policy': results['policy'],
+        'values': results['values']
     }
 
 def run_monte_carlo(config: RLConfig = default_config) -> Dict[str, Any]:
@@ -53,8 +63,8 @@ def run_monte_carlo(config: RLConfig = default_config) -> Dict[str, Any]:
     Returns:
         Dictionary containing results and metrics
     """
-    env = setup_environment()
-    policy = Policy()
+    env = setup_environment(config)
+    policy = Policy(env.size)  # Initialize policy with correct size
     mc = MonteCarlo(env, policy)
     
     # State value estimation
@@ -80,8 +90,8 @@ def run_temporal_difference(config: RLConfig = default_config) -> Dict[str, Any]
     Returns:
         Dictionary containing results and metrics
     """
-    env = setup_environment()
-    policy = Policy()
+    env = setup_environment(config)
+    policy = Policy(env.size)  # Initialize policy with correct size
     td = TemporalDifferenceLearning(env, policy)
     
     # State value estimation

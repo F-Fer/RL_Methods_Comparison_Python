@@ -118,7 +118,9 @@ class TemporalDifferenceLearning(BaseRLAlgorithm):
             epsilon: Probability of choosing a random action
         """
         for state in range(self.env.observation_space.n):
+            print(state)
             x, y = GridEnv.get_coordinates_from_state(state)
+            print(x, y)
             if (x, y) in self.env.terminal_states:
                 continue
             best_action = np.argmax(self.action_values[state])
