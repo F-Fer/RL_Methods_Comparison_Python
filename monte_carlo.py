@@ -2,11 +2,11 @@ import numpy as np
 from typing import Dict, Any, List, Tuple
 from env import GridEnv
 from policy import Policy
-from rl.base import BaseRLAlgorithm
 
-class MonteCarlo(BaseRLAlgorithm):
+class MonteCarlo:
     """
-    Monte Carlo Reinforcement Learning implementation.
+    Monte Carlo Methods (Model-Free, Sample-Based, No Bootstrapping)
+    This method learns purely from episodes, without using the environment's internal model.
     
     This class implements Monte Carlo methods for both state and action value estimation.
     The key features are:
@@ -21,41 +21,19 @@ class MonteCarlo(BaseRLAlgorithm):
     4. Improving the policy based on the estimated values
     """
 
-    def __init__(self, env: GridEnv, policy: Policy, discount_factor: float = 0.9):
+    def __init__(self, env: GridEnv, discount_factor: float = 0.9):
         """
         Initialize Monte Carlo algorithm.
         
         Args:
             env: The environment to learn in
-            policy: The policy to use for action selection
             discount_factor: The discount factor (gamma) for future rewards
         """
-        super().__init__(env, policy, discount_factor)
-        self.values = np.zeros((4, 4))
-        self.action_values = np.zeros((16, 4))  # states x actions
-
-    def train(self, num_episodes: int = 1000, learning_rate: float = 0.1) -> Dict[str, Any]:
-        """
-        Train using Monte Carlo methods.
-        
-        Args:
-            num_episodes: Number of episodes to train for
-            learning_rate: Not used in MC, kept for interface consistency
-            
-        Returns:
-            Dictionary containing training metrics and results
-        """
-        # State value estimation
-        self.evaluate_state_values(num_episodes)
-        
-        # Action value estimation and policy improvement
-        self.iterate(10, num_episodes, 0.1)  # Default parameters
-        
-        return {
-            'state_values': self.values,
-            'action_values': self.action_values,
-            'policy': self.policy
-        }
+        self.env = env
+        self.policy = Policy(env.observation_space.n)
+        self.discount_factor = discount_factor
+        self.values = np.zeros(env.observation_space.n)  # State values
+        self.action_values = np.zeros((env.observation_space.n, env.action_space.n))  # Q-values
 
     def evaluate_state_values(self, num_episodes: int = 1000):
         """
@@ -77,10 +55,10 @@ class MonteCarlo(BaseRLAlgorithm):
             G = 0
             visited_states = set()
             
+            # SAMPLE-BASED: Waits until end of episode, computes actual return G
             for t in reversed(range(len(episode))):
                 state, action, reward = episode[t]
                 G = reward + self.discount_factor * G
-                
                 if state not in visited_states:
                     visited_states.add(state)
                     if state not in state_returns:
@@ -89,7 +67,9 @@ class MonteCarlo(BaseRLAlgorithm):
         
         # Average returns to estimate state values
         for state in state_returns:
-            self.values[GridEnv.get_coordinates_from_state(state)] = np.mean(state_returns[state])
+            # MODEL-FREE: Does not rely on knowledge of transition probabilities
+            # Learns only from experience (sampled episodes), no set_state used
+            self.values[state] = np.mean(state_returns[state])
 
     def evaluate_action_values(self, num_episodes: int = 1000):
         """
@@ -111,6 +91,7 @@ class MonteCarlo(BaseRLAlgorithm):
             G = 0
             actions_taken = set()
             
+            # SAMPLE-BASED: Waits until end of episode, computes actual return G
             for t in reversed(range(len(episode))):
                 state, action, reward = episode[t]
                 G = reward + self.discount_factor * G
@@ -123,6 +104,8 @@ class MonteCarlo(BaseRLAlgorithm):
         
         # Average returns to estimate action values
         for (state, action) in action_returns:
+            # MODEL-FREE: Does not rely on knowledge of transition probabilities
+            # Learns only from experience (sampled episodes), no set_state used
             self.action_values[state, action] = np.mean(action_returns[(state, action)])
 
     def improve_policy(self, epsilon: float = 0.1):
@@ -138,31 +121,79 @@ class MonteCarlo(BaseRLAlgorithm):
             epsilon: Probability of choosing a random action
         """
         for state in range(self.env.observation_space.n):
-            x, y = GridEnv.get_coordinates_from_state(state)
-            if (x, y) in self.env.terminal_states:
+            # Skip terminal states
+            is_valid = self.env.set_state(state)
+            if not is_valid:
                 continue
                 
             best_action = np.argmax(self.action_values[state])
             for action in range(self.env.action_space.n):
                 if action == best_action:
-                    self.policy.probas[x, y, action] = 1 - epsilon + (epsilon / self.env.action_space.n)
+                    self.policy.probas[state, action] = 1 - epsilon + (epsilon / self.env.action_space.n)
                 else:
-                    self.policy.probas[x, y, action] = epsilon / self.env.action_space.n
+                    self.policy.probas[state, action] = epsilon / self.env.action_space.n
 
-    def iterate(self, num_iterations: int = 10, episodes_per_eval: int = 1000, epsilon: float = 0.1):
+    def iterate(self, max_iterations: int = 100, episodes_per_eval: int = 1000, 
+              epsilon: float = 0.1) -> Dict[str, Any]:
         """
-        Iterate between policy evaluation and improvement.
+        Iterate between policy evaluation and improvement (Monte Carlo Control).
+        
+        The algorithm alternates between:
+        1. Policy Evaluation: Estimate Q(s,a) using Monte Carlo methods
+        2. Policy Improvement: Make policy ε-greedy with respect to Q(s,a)
+        
+        Continues until either:
+        - The policy is stable (no changes in action selection)
+        - The maximum number of iterations is reached
+        
+        Note: Unlike in policy iteration, we maintain some exploration (ε > 0),
+        so policy stability here means the best actions (argmax) remain the same.
         
         Args:
-            num_iterations: Number of policy evaluation-improvement cycles
+            max_iterations: Maximum number of policy evaluation-improvement cycles
             episodes_per_eval: Number of episodes per evaluation
             epsilon: Exploration rate for policy improvement
+            
+        Returns:
+            Dictionary containing:
+            - 'converged': Whether the algorithm converged
+            - 'iterations': Number of iterations performed
+            - 'policy_stable': Whether the policy was stable in the last iteration
         """
-        for _ in range(num_iterations):
+        for iteration in range(max_iterations):
+            # Store old best actions for each state
+            old_best_actions = np.argmax(self.action_values, axis=1)
+            
+            # Policy Evaluation: Estimate action values using Monte Carlo
             self.evaluate_action_values(num_episodes=episodes_per_eval)
+            
+            # Policy Improvement: Update policy to be ε-greedy w.r.t. current Q-values
             self.improve_policy(epsilon=epsilon)
+            
+            # Check policy stability by comparing best actions
+            new_best_actions = np.argmax(self.action_values, axis=1)
+            policy_stable = np.all(old_best_actions == new_best_actions)
+            
+            if policy_stable:
+                return {
+                    'converged': True,
+                    'iterations': iteration + 1,
+                    'policy_stable': True
+                }
+        
+        return {
+            'converged': False,
+            'iterations': max_iterations,
+            'policy_stable': False
+        }
 
-    def generate_episode(self) -> list[tuple[int, int, float]]:
+    def generate_episode(self) -> List[Tuple[int, int, float]]:
+        """
+        Generate a single episode using the current policy.
+        
+        Returns:
+            List of (state, action, reward) tuples representing the episode
+        """
         obs, info = self.env.reset()
         episode = []
         done = False
@@ -172,6 +203,6 @@ class MonteCarlo(BaseRLAlgorithm):
             episode.append((obs, action, reward))
             obs = next_state
         return episode
-    
+
 if __name__ == "__main__":
     pass

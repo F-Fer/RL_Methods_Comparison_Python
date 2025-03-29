@@ -20,10 +20,12 @@ class RLConfig:
     
     # Monte Carlo settings
     mc_episodes: int = 100
+    mc_iterations: int = 10
     mc_learning_rate: float = 0.1
     
     # TD Learning settings
     td_episodes: int = 1000
+    td_iterations: int = 10
     td_learning_rate: float = 0.1
     
     def to_dict(self) -> Dict[str, Any]:

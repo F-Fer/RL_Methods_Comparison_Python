@@ -53,13 +53,15 @@ class GPI:
                     action_prob = self.policy.get_probability_of_action(state, action)
                     
                     # Get next state and reward for this action
-                    # Skip terminal states
+
+                    # MODEL-BASED: Uses the environment's transition model (via set_state + step)
                     is_valid = self.env.set_state(state)
                     if not is_valid:
                         continue
                     next_state, reward, done, truncated, info = self.env.step(action)
                     
                     # Add to value using action probability as weight
+                    # BOOTSTRAPPING: Update V(s) using V(s') from previous iteration
                     new_value += action_prob * (reward + self.discount_factor * self.values[next_state])
                 
                 # Update value and track maximum change

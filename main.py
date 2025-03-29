@@ -50,7 +50,7 @@ def run_policy_iteration(config: RLConfig = default_config) -> Dict[str, Any]:
     results = gpi.iterate_policy()
     return {
         'policy': results['policy'],
-        'values': results['values']
+        'state_values': results['values']
     }
 
 def run_monte_carlo(config: RLConfig = default_config) -> Dict[str, Any]:
@@ -64,20 +64,20 @@ def run_monte_carlo(config: RLConfig = default_config) -> Dict[str, Any]:
         Dictionary containing results and metrics
     """
     env = setup_environment(config)
-    policy = Policy(env.size)  # Initialize policy with correct size
-    mc = MonteCarlo(env, policy)
+    mc = MonteCarlo(env, discount_factor=config.discount_factor)
     
     # State value estimation
-    for _ in range(config.mc_episodes):
-        mc.evaluate_state_values()
+    mc.evaluate_state_values(config.mc_episodes)
     
     # Action value estimation
-    mc.iterate(config.policy_iteration_iters, config.mc_episodes, config.mc_learning_rate)
+    results = mc.iterate(config.mc_iterations, config.mc_episodes, config.mc_learning_rate)
     
     return {
         'state_values': mc.values,
         'action_values': mc.action_values,
-        'policy': mc.policy
+        'policy': mc.policy,
+        'converged': results['converged'],
+        'iterations': results['iterations']
     }
 
 def run_temporal_difference(config: RLConfig = default_config) -> Dict[str, Any]:
@@ -91,8 +91,7 @@ def run_temporal_difference(config: RLConfig = default_config) -> Dict[str, Any]
         Dictionary containing results and metrics
     """
     env = setup_environment(config)
-    policy = Policy(env.size)  # Initialize policy with correct size
-    td = TemporalDifferenceLearning(env, policy)
+    td = TemporalDifferenceLearning(env, discount_factor=config.discount_factor)
     
     # State value estimation
     td.evaluate_state_values(config.td_learning_rate, config.td_episodes)
@@ -118,15 +117,20 @@ def display_results(results: Dict[str, Any], algorithm: str):
         print("\nFinal Policy:")
         display_policy(results['policy'])
     
-    if 'values' in results:
+    if 'state_values' in results:
         print("\nState Values:")
-        display_values(results['values'])
+        display_values(results['state_values'])
     
     if 'action_values' in results:
-        print("\nAction Values:")
+        print()
         display_action_values(results['action_values'])
         print("\nPolicy from Action Values:")
         display_policy_from_action_values(results['action_values'])
+    
+    if 'converged' in results:
+        print(f"\nConverged: {results['converged']}")
+        if 'iterations' in results:
+            print(f"Iterations: {results['iterations']}")
 
 def main():
     """Run all RL algorithms and display results."""
