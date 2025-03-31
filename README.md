@@ -1,6 +1,6 @@
 # 🤖 Reinforcement Learning Methods Comparison
 
-A Python implementation comparing different Reinforcement Learning (RL) algorithms in a grid world environment. This project implements and compares three fundamental RL approaches: Dynamic Programming (Policy Iteration), Monte Carlo Methods, and Temporal Difference Learning.
+A Python implementation comparing different Reinforcement Learning algorithms in a grid world environment. This project implements and compares three fundamental RL approaches: Dynamic Programming (Policy Iteration), Monte Carlo Methods, and Temporal Difference Learning.
 
 ## 🎯 Features
 
@@ -11,19 +11,18 @@ A Python implementation comparing different Reinforcement Learning (RL) algorith
   - ⏱️ Temporal Difference Learning (TD(0), SARSA, Q-Learning)
 - 📈 Visualization utilities for policies and value functions
 - ⚙️ Configurable hyperparameters
-- 🧪 Comparative analysis framework
 
 ## 🛠️ Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/RL_Methods_Comparison_Python.git
+git clone https://github.com/F-Fer/RL_Methods_Comparison_Python.git
 cd RL_Methods_Comparison_Python
 ```
 
 2. Install dependencies:
 ```bash
-pip install numpy gymnasium
+pip install -r requirements.txt
 ```
 
 ## 🚀 Usage
@@ -53,6 +52,12 @@ The environment is a customizable grid world where:
 - Terminal states: Top-left and bottom-right corners
 - Rewards: -1 for each move, 0 for reaching terminal states
 
+| 0 | 1 | 2 | 3 |
+|---|---|---|---|
+| 4 | 5 | 6 | 7 |
+| 8 | 9 | 10| 11|
+| 12| 13| 14| 15|
+
 ## 🔧 Configuration
 
 Key parameters can be modified in `config.py`:
@@ -66,6 +71,12 @@ epsilon: float = 0.1            # Exploration rate
 ```
 
 ## 🧮 Implemented Algorithms
+
+| Method | Model-Free / Model-Based | On-/Off-Policy | Bootstrapping | Sample-Based | Example Algorithm |
+| ------ | ---------------------- | -------------- | ------------ | ----------- | ---------------- |
+| Dynamic Programming | Model-Based | Policy Evaluation | ✅ | ❌ | Policy Iteration |
+| Monte Carlo | Model-Free | On-/Off-Policy | ❌ | ✅ | First-Visit MC |
+| Temporal-Difference | Model-Free | On-/Off-Policy | ✅ | ✅ | TD(0), SARSA, Q-learning |
 
 ### Policy Iteration (Dynamic Programming)
 - Model-based approach
@@ -89,10 +100,6 @@ The project includes utilities to visualize:
 - Action value functions (Q-values)
 - Policies (using directional arrows)
 - Grid world state
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
