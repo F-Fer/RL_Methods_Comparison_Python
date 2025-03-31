@@ -166,7 +166,7 @@ class GridEnv(gym.Env):
         . . . .
         T . . T
         """
-        grid = [[f'{row * self.size + col}' for col in range(self.size)] for row in range(self.size)]
+        grid = [[f'.' for col in range(self.size)] for row in range(self.size)]
         
         # Mark terminal states
         for tx, ty in self.terminal_states:
@@ -183,7 +183,7 @@ class GridEnv(gym.Env):
 
 if __name__ == "__main__":
     env = GridEnv(size=4)
-    
+
     print(env.reset())
     env.display_state()
     print(env.state)

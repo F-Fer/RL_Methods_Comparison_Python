@@ -1,7 +1,7 @@
 import numpy as np
 from policy import Policy
 
-def display_values(values: np.ndarray, grid_size: int = 4):
+def display_values(values: np.ndarray, grid_size: int):
     """
     Display the values in a grid format.
     States are arranged as:
@@ -22,7 +22,7 @@ def display_values(values: np.ndarray, grid_size: int = 4):
             row_str += f" {values[state]:6.2f}"
         print(row_str)
 
-def display_policy(policy: Policy, grid_size: int = 4):
+def display_policy(policy: Policy, grid_size: int):
     """
     Print the policy grid with the most probable action for each cell.
     Actions are represented as arrows:
@@ -54,7 +54,7 @@ def display_policy(policy: Policy, grid_size: int = 4):
                 row_str += f"  {action_symbols[best_action]}  "
         print(row_str)
 
-def display_policy_from_action_values(action_values: np.ndarray, grid_size: int = 4):
+def display_policy_from_action_values(action_values: np.ndarray, grid_size: int):
     """
     Display a policy derived from action values in a grid format.
     Actions are represented as arrows:

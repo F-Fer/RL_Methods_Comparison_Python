@@ -106,7 +106,7 @@ def run_temporal_difference(config: RLConfig = default_config) -> Dict[str, Any]
         'policy': td.policy
     }
 
-def display_results(results: Dict[str, Any], algorithm: str):
+def display_results(results: Dict[str, Any], algorithm: str, config: RLConfig):
     """Display results for a given algorithm."""
     print(f"\n=== {algorithm} Results ===")
     
@@ -115,17 +115,17 @@ def display_results(results: Dict[str, Any], algorithm: str):
     
     if 'policy' in results:
         print("\nFinal Policy:")
-        display_policy(results['policy'])
+        display_policy(results['policy'], grid_size=config.grid_size)
     
     if 'state_values' in results:
         print("\nState Values:")
-        display_values(results['state_values'])
+        display_values(results['state_values'], config.grid_size)
     
     if 'action_values' in results:
         print()
-        display_action_values(results['action_values'])
+        display_action_values(results['action_values'], config.grid_size)
         print("\nPolicy from Action Values:")
-        display_policy_from_action_values(results['action_values'])
+        display_policy_from_action_values(results['action_values'], config.grid_size)
     
     if 'converged' in results:
         print(f"\nConverged: {results['converged']}")
@@ -134,7 +134,7 @@ def display_results(results: Dict[str, Any], algorithm: str):
 
 def main():
     """Run all RL algorithms and display results."""
-    config = RLConfig()
+    config = RLConfig(grid_size=5)
     
     # Run and display results for each algorithm
     algorithms = {
@@ -146,7 +146,7 @@ def main():
     for name, algorithm in algorithms.items():
         try:
             results = algorithm(config)
-            display_results(results, name)
+            display_results(results, name, config)
         except Exception as e:
             print(f"Error running {name}: {str(e)}")
 

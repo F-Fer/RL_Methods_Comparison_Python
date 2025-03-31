@@ -64,6 +64,7 @@ class TemporalDifferenceLearning:
     def sarsa(self, learning_rate: float = 0.1, num_episodes: int = 1000, epsilon: float = 0.1):
         """
         SARSA algorithm for action-value estimation.
+        State-Action-State-Action (SARSA) is a model-free on-policy algorithm.
         
         Updates Q-values using the SARSA update rule:
         Q(s,a) ← Q(s,a) + α[R + γQ(s',a') - Q(s,a)]
