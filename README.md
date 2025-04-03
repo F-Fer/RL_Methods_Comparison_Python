@@ -30,8 +30,6 @@ Each tutorial provides in-depth explanations of the algorithms, implementation d
 - 📈 Visualization utilities for policies and value functions
 - ⚙️ Configurable hyperparameters
 
-https://youtu.be/DTIvq2brfCs
-
 ## 🛠️ Installation
 
 1. Clone the repository:
