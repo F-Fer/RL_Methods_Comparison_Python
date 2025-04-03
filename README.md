@@ -2,6 +2,24 @@
 
 A Python implementation comparing different Reinforcement Learning algorithms in a grid world environment. This project implements and compares three fundamental RL approaches: Dynamic Programming (Policy Iteration), Monte Carlo Methods, and Temporal Difference Learning.
 
+## 📺 Tutorial Series
+
+This project is accompanied by a comprehensive video tutorial series that walks through the implementation of each component:
+
+1. **Environment Implementation** - Building a custom Grid World using OpenAI Gym
+   - [Watch Tutorial](https://youtu.be/DTIvq2brfCs)
+   
+2. **Dynamic Programming** - Implementing and understanding Policy Iteration
+   - [Watch Tutorial](https://youtu.be/RUIlOL5F_jg)
+   
+3. **Monte Carlo Methods** - Exploring model-free learning with Monte Carlo
+   - [Watch Tutorial](https://youtu.be/sfCAN3ua7Qc)
+   
+4. **Temporal Difference Learning** - Implementing SARSA and Q-Learning
+   - [Watch Tutorial](https://youtu.be/gZ5pC3uJqfM)
+
+Each tutorial provides in-depth explanations of the algorithms, implementation details, and practical considerations.
+
 ## 🎯 Features
 
 - 🔲 Customizable Grid World environment
@@ -11,6 +29,8 @@ A Python implementation comparing different Reinforcement Learning algorithms in
   - ⏱️ Temporal Difference Learning (TD(0), SARSA, Q-Learning)
 - 📈 Visualization utilities for policies and value functions
 - ⚙️ Configurable hyperparameters
+
+https://youtu.be/DTIvq2brfCs
 
 ## 🛠️ Installation
 
